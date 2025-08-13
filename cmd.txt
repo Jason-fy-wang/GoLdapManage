@@ -1,0 +1,1 @@
+go mod edit -module=com.ldap/management
