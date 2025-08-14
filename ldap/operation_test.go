@@ -8,7 +8,7 @@ func TestLDAPOperation(t *testing.T) {
 	baseDN := "dc=example,dc=com"
 	filter := "(objectClass=*)"
 
-	op, _ := NewLDAPOperation("192.168.20.10", 389)
+	op, _ := NewLDAPOperation("","","192.168.20.10", 389)
 	//op.User = fmt.Sprint("cn=", op.User, ",dc=example,dc=com")
 	//err := op.Connect()
 	// if err != nil {

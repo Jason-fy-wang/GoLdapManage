@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "${fileDirname}",
             "args": [
-                "start","--lhost", ""
+                "start",
             ],
             "env": {
                 "LDAP_USER":"cn=admin,dc=example,dc=com",

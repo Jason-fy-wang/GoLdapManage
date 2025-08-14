@@ -3,7 +3,7 @@ package ldap
 import (
 	"errors"
 	"fmt"
-	"os"
+	"strings"
 
 	gldap "github.com/go-ldap/ldap/v3"
 )
@@ -16,23 +16,17 @@ type LDAPOperation struct {
 	Port int
 }
 
-func NewLDAPOperation(host string, port int) (*LDAPOperation, error) {
-	user := os.Getenv("LDAP_USER")
-	pwd := os.Getenv("LDAP_PASSWORD")
-
+func NewLDAPOperation(user, pwd, host string, port int) (*LDAPOperation, error) {
+	//user := os.Getenv("LDAP_USER")
+	//pwd := os.Getenv("LDAP_PASSWORD")
 	ldapOperation := LDAPOperation{
 		User: user,
 		Pwd:  pwd,
 		Host: host,
 		Port: port,
 	}
-	if err := ldapOperation.Connect(); err != nil {
-		fmt.Printf("Failed to connect to LDAP server: %v\n", err)
-		return nil, err
-	}
 
 	return &ldapOperation, nil
-
 }
 
 func (op *LDAPOperation) Connect() error {
@@ -50,6 +44,30 @@ func (op *LDAPOperation) Connect() error {
 
 	op.Conn = conn
 	return nil
+}
+
+func (op *LDAPOperation) Authenicate() error {
+	if op.Conn == nil {
+		return errors.New("LDAP connection is not established")
+	}
+	var dn string
+	if strings.Contains(op.User, "cn=admin") {
+		dn = "dc=example,dc=com"
+	}else{
+		dn = op.User
+	}
+	req:= gldap.NewSearchRequest(
+		dn,
+		gldap.ScopeWholeSubtree,
+		gldap.NeverDerefAliases,
+		0, 0, false,
+		"(objectClass=*)",
+		nil,
+		nil,
+	)
+	_, err := op.Conn.Search(req)
+
+	return err
 }
 
 func (op *LDAPOperation) Search(baseDN, filter string) ([]*gldap.Entry, error) {
