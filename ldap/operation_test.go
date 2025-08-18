@@ -1,19 +1,24 @@
 package ldap
 
 import (
+	"os"
 	"testing"
 )
 
 func TestLDAPOperation(t *testing.T) {
+	user := os.Getenv("LDAP_USER")
+	pwd := os.Getenv("LDAP_PASSWORD")
 	baseDN := "dc=example,dc=com"
 	filter := "(objectClass=*)"
-
-	op, _ := NewLDAPOperation("","","192.168.20.10", 389)
+	if user == "" || pwd == "" {
+		t.Skip("empty user info. skip test")
+	}
+	op, _ := NewLDAPOperation(user,pwd,"192.168.20.10", 389)
 	//op.User = fmt.Sprint("cn=", op.User, ",dc=example,dc=com")
-	//err := op.Connect()
-	// if err != nil {
-	// 	t.Fatalf("Failed to connect to LDAP server: %v", err)
-	// }
+	err := op.Connect()
+	if err != nil {
+	 	t.Fatalf("Failed to connect to LDAP server: %v", err)
+	 }
 
 	if op.Conn == nil {
 		t.Fatal("LDAP connection is nil after connecting")
@@ -31,3 +36,26 @@ func TestLDAPOperation(t *testing.T) {
 		t.Error("No entries found for the given filter")
 	}
 }
+
+
+func TestAttributeOperation(t *testing.T){
+	user := os.Getenv("LDAP_USER")
+	pwd := os.Getenv("LDAP_PASSWORD")
+	if user == "" || pwd == "" {
+		t.Skip("invalud user info. skip unit test")
+	}
+	op, _ := NewLDAPOperation(user,pwd,"192.168.20.10", 389)
+	//op.User = fmt.Sprint("cn=", op.User, ",dc=example,dc=com")
+	err := op.Connect()
+	if err != nil {
+	 	t.Fatalf("Failed to connect to LDAP server: %v", err)
+	 }
+
+	if op.Conn == nil {
+		t.Fatal("LDAP connection is nil after connecting")
+	}
+	defer op.Conn.Close()
+
+	op.GetObjectClassAttributes()
+}
+

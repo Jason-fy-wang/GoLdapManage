@@ -14,7 +14,7 @@ import (
 
 type Router struct {
 	Engine *gin.Engine
-	Ldap   *ldap.LDAPOperation
+	Ldap   ldap.LdapOperation
 	SecurityKey []byte
 }
 
@@ -41,14 +41,8 @@ func (r *Router) Login(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Username and password are required"})
 		return
 	}
-	r.Ldap, _ = ldap.NewLDAPOperation("", "", lhost, lport)
-	if username == "admin" {
-		r.Ldap.User = "cn=admin,dc=example,dc=com"
-	}else {
-		r.Ldap.User = fmt.Sprint("uid=", username, ",ou=person.dc=example,dc=com")
-	}
+	r.Ldap, _ = ldap.NewLDAPOperation(username, password, lhost, lport)
 
-	r.Ldap.Pwd = password
 	if err := r.Ldap.Connect(); err != nil {
 		log.Println("Failed to connect to LDAP server:", err)
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
@@ -83,8 +77,14 @@ func (r *Router) AuthRequire() gin.HandlerFunc {
 			return
 		}
 
-		if tokenString == "" || r.Ldap.User == "" || r.Ldap.Pwd == "" {
+		if tokenString == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+			return
+		}
+
+		ldop := r.Ldap.(*ldap.LDAPOperation)
+		if ldop.User == "" || ldop.Pwd == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid information, please re-login."})
 			return
 		}
 
