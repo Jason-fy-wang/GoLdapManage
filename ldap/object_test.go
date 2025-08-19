@@ -107,13 +107,61 @@ func TestObjectParse(t *testing.T){
 		}
 	}
 
-	names := []string{"OpenLDAProotDSE", "LDAProotDSE","organization","applicationEntity","top"}
-	for _, name := range names{
-		chain := parser.GetInheritenceChain(name)
-		t.Logf("chain %v", chain)
+	//names := []string{"OpenLDAProotDSE", "LDAProotDSE","organization","applicationEntity","top"}
 
-		musts, mays := parser.GetAllAttributees(name)
+	values := []struct {
+		name string
+		chain []string
+		must []string
+		may []string
+	}{
+		{
+			name: "OpenLDAProotDSE",
+			chain: []string{"OpenLDAProotDSE", "LDAProotDSE", "top"},
+			must: []string{"objectClass"},
+			may: []string{"cn"},
+		},
+		{
+			name: "LDAProotDSE",
+			chain: []string{"OpenLDAProotDSE","LDAProotDSE", "top"},
+			must: []string{"objectClass"},
+			may: []string{"cn"},
+		},
+		{
+			name: "organization",
+			chain: []string{"organization", "top"},
+			must: []string{"o","objectClass"},
+			may: []string{"userPassword","searchGuide","seeAlso","businessCategory","x121Address","registeredAddress","destinationIndicator","preferredDeliveryMethod","telexNumber","teletexTerminalIdentifier","telephoneNumber","internationaliSDNNumber","facsimileTelephoneNumber","street","postOfficeBox","postalCode","postalAddress","physicalDeliveryOfficeName","st","l","description"},
+		},
+		{
+			name: "applicationEntity",
+			chain: []string{"applicationEntity", "top"},
+			must: []string{"presentationAddress","cn","objectClass"},
+			may: []string{"supportedApplicationContext", "seeAlso", "ou","o","l","description"},
+		},
+		{
+			name: "top",
+			chain: []string{"top"},
+			must: []string{"objectClass"},
+			may: []string{},
+		},
+	}
+
+	for _, value := range values{
+		chain := parser.GetInheritenceChain(value.name)
+		t.Logf("chain %v", chain)
+		if !slices.Equal(chain, value.chain){
+			t.Errorf("get value: %s, expect: %s", chain, value.chain)
+		}
+
+		musts, mays := parser.GetAllAttributees(value.name)
 		t.Logf("musts: %v, may: %s: ", musts, mays)
+		if !slices.Equal(musts, value.must) {
+			t.Errorf("get must: %v, expect %v:", musts, value.must)
+		}
+		if !slices.Equal(mays, value.may) {
+			t.Errorf("get may: %v, expect %v", mays, value.may)
+		}
 	}
 
 
