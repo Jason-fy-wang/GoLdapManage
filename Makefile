@@ -1,5 +1,8 @@
 
-.PHONY: test test-race test-cover  test-bench  clean  test-json
+.PHONY: build test test-race test-cover  test-bench  clean  test-json
+
+build:
+	go build starter/main.go
 
 test:
 	go test -v ./...

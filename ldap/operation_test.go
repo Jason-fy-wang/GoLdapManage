@@ -6,9 +6,9 @@ import (
 )
 
 func TestLDAPOperation(t *testing.T) {
-	user := os.Getenv("LDAP_USER")
-	pwd := os.Getenv("LDAP_PASSWORD")
-	baseDN := "dc=example,dc=com"
+	user := "cn=admin,dc=example,dc=com"//os.Getenv("LDAP_USER")
+	pwd := "loongson"// os.Getenv("LDAP_PASSWORD")
+	baseDN := "ou=person,dc=example,dc=com"
 	filter := "(objectClass=*)"
 	if user == "" || pwd == "" {
 		t.Skip("empty user info. skip test")

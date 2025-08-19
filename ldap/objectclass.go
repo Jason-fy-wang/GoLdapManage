@@ -44,7 +44,7 @@ func (p *ObjectClassParser) ParseObjectClass(presention string) (*ObjectClass, e
 	obj.Oid = oid
 
 	// name
-	namePattern := regexp.MustCompile(`NAME\s+'([\w]+)'|NAME\s+\(\s*([^)]+)\s*\)`)
+	namePattern := regexp.MustCompile(`NAME\s+'([-\w]+)'|NAME\s+\(\s*([^)]+)\s*\)`)
 	matches := namePattern.FindStringSubmatch(presention)
 	if len(matches) == 0 {
 		return nil,errors.New("invalid name")
@@ -57,21 +57,24 @@ func (p *ObjectClassParser) ParseObjectClass(presention string) (*ObjectClass, e
 	// desc
 	descPattern := regexp.MustCompile(`DESC\s+'([^']+)'`)
 	matches = descPattern.FindStringSubmatch(presention)
-	if len(matches) != 2 {
-		return nil,errors.New("invalid DESC format")
+	if len(matches)==2 {
+		obj.Description = ""
+	}else if len(matches) == 2 {
+		obj.Description = matches[1]
 	}
-	obj.Description = matches[1]
+	
 
 	// parent
-	if obj.Name[0] == "top" {
+	if obj.Name[0] == "top"{
 		obj.Parent = ""
 	}else{
 		supPattern := regexp.MustCompile(`SUP\s+(\w+)`)
 		matches = supPattern.FindStringSubmatch(presention)
-		if len(matches) != 2{
-			return nil,errors.New("invlid SUP format")
+		if len(matches) == 0{
+			obj.Parent = ""
+		}else if len(matches) == 2 {
+			obj.Parent = matches[1]
 		}
-		obj.Parent = matches[1]
 	}
 	// type
 	if strings.Contains(presention, STRUCTURAL) {

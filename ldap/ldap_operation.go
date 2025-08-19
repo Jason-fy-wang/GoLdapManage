@@ -3,6 +3,7 @@ package ldap
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	gldap "github.com/go-ldap/ldap/v3"
@@ -12,6 +13,8 @@ type LdapOperation interface{
 	Connect() error
 	Authenicate() error
 	Search(baseDN, filter string) ([]*gldap.Entry, error)
+	GetAttrOfObjectClass(dn string) ([]*gldap.Entry, error) 
+	GetObjectClassAttributes() error
 	Close() error
 }
 
@@ -22,6 +25,7 @@ type LDAPOperation struct {
 	Pwd  string
 	Host string
 	Port int
+    ObjParser *ObjectClassParser
 }
 
 func NewLDAPOperation(user, pwd, host string, port int) (*LDAPOperation, error) {
@@ -38,6 +42,7 @@ func NewLDAPOperation(user, pwd, host string, port int) (*LDAPOperation, error) 
 		Pwd:  pwd,
 		Host: host,
 		Port: port,
+		ObjParser: NewObjectClassParser(),
 	}
 
 	return &ldapOperation, nil
@@ -107,17 +112,17 @@ func (op *LDAPOperation) Search(baseDN, filter string) ([]*gldap.Entry, error) {
 }
 
 // Example: Retrieve objectClass attribute for a given DN
-func (op *LDAPOperation) GetObjectClass(dn string) ([]string, error) {
+func (op *LDAPOperation) GetAttrOfObjectClass(dn string) ([]*gldap.Entry, error) {
 	if op.Conn == nil {
 		return nil, errors.New("LDAP connection is not established")
 	}
 	searchRequest := gldap.NewSearchRequest(
 		dn,
-		gldap.ScopeBaseObject,
+		gldap.ScopeBaseObject,   // base : dn self;   one:  one level of child;  all: search all child entry
 		gldap.NeverDerefAliases,
 		0, 0, false,
 		"(objectClass=*)",
-		[]string{"objectClass"}, // Only request objectClass attribute
+		[]string{},  // request all attributes
 		nil,
 	)
 	result, err := op.Conn.Search(searchRequest)
@@ -125,15 +130,17 @@ func (op *LDAPOperation) GetObjectClass(dn string) ([]string, error) {
 		return nil, err
 	}
 	if len(result.Entries) == 0 {
-		return nil, errors.New("No entry found")
+		return nil, errors.New("no entry found")
 	}
-	return result.Entries[0].GetAttributeValues("objectClass"), nil
+	return result.Entries, nil
 }
 
-// Example: Get MUST and MAY attributes for an objectClass from schema
-func (op *LDAPOperation) GetObjectClassAttributes() ( err error) {
+func (op *LDAPOperation) GetObjectClassAttributes() error {
 	if op.Conn == nil {
 		return errors.New("LDAP connection is not established")
+	}
+	if len(op.ObjParser.Objects) > 0{
+		return nil
 	}
 	searchRequest := gldap.NewSearchRequest(
 		"cn=subschema",
@@ -149,41 +156,16 @@ func (op *LDAPOperation) GetObjectClassAttributes() ( err error) {
 		return err
 	}
 	if len(result.Entries) == 0 {
-		return errors.New("No schema entry found")
+		return errors.New("no schema entry found")
 	}
 	objectClasses := result.Entries[0].GetAttributeValues("objectClasses")
-	// for _, oc := range objectClasses {
-	// 	if strings.Contains(oc, "'"+objectClass+"'") || strings.Contains(oc, objectClass+" ") {
-	// 		// Parse MUST and MAY from the objectClass definition string (simplified)
-	// 		must = parseAttributeList(oc, "MUST")
-	// 		may = parseAttributeList(oc, "MAY")
-	// 		return must, may, nil
-	// 	}
-	// }
-	fmt.Println(objectClasses)
-	return nil
-}
-
-// Helper to parse attribute list from schema definition string
-func parseAttributeList(def, keyword string) []string {
-	idx := strings.Index(def, keyword)
-	if idx == -1 {
-		return nil
-	}
-	start := strings.Index(def[idx:], "(")
-	end := strings.Index(def[idx:], ")")
-	if start == -1 || end == -1 {
-		return nil
-	}
-	attrs := def[idx+start+1 : idx+end]
-	parts := strings.FieldsFunc(attrs, func(r rune) bool { return r == '$' || r == ' ' })
-	var result []string
-	for _, p := range parts {
-		if p != "" {
-			result = append(result, strings.TrimSpace(p))
+	for _, item := range objectClasses {
+		if _, err := op.ObjParser.ParseObjectClass(item); err != nil {
+			log.Fatal("parse objectclass error: ", err, item)
+			return err
 		}
 	}
-	return result
+	return nil
 }
 
 func (op *LDAPOperation) Close() error {

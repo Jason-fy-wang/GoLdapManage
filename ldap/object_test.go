@@ -66,6 +66,19 @@ func TestObjectParse(t *testing.T){
 			},
 			name: "OpenLDAProotDSE",
 		},
+		{
+			inputs: "( 2.5.20.1 NAME 'subschema' DESC 'RFC4512: controlling subschem a (sub)entry' AUXILIARY MAY ( dITStructureRules $ nameForms $ ITContentRules $ objectClasses $ attributeTypes $ matchingRules $ matchingRuleUse ) )",
+			expect: ObjectClass{
+				Oid: "2.5.20.1",
+				Name: []string{"subschema"},
+				Parent: "",
+				Description: "RFC4512: controlling subschem a (sub)entry",
+				Type: AUXILIARY,
+				Must: []string{},
+				May: []string{"dITStructureRules","nameForms","ITContentRules","objectClasses","attributeTypes","matchingRules","matchingRuleUse"},
+			},
+			name: "subschema",
+		},
 	}
 	parser := NewObjectClassParser()
 

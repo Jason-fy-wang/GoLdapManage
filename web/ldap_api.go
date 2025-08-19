@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"com.ldap/management/ldap"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	log "github.com/sirupsen/logrus"
 )
 
 type Router struct {
@@ -65,6 +65,8 @@ func (r *Router) Login(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
+	// retrieve all schema
+	go r.Ldap.GetObjectClassAttributes()
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful","token": tokenString})
 }
 
@@ -99,7 +101,18 @@ func (r *Router) AuthRequire() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
+		c.Next()
+	}
+}
 
+func (r *Router) Recovery() gin.HandlerFunc {
+	return func(c *gin.Context){
+		defer func() {
+			if rec := recover(); rec != nil {
+				log.Errorln("recovery..", rec)
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "internal abnormal."})
+			}
+		}()
 		c.Next()
 	}
 }
@@ -113,8 +126,38 @@ func (r *Router) SetupRouter() {
 	})
 
 	// search all
-	groupRoute.GET("/ldap/all", func(c *gin.Context) {
-		if r.Ldap == nil {
+	groupRoute.GET("/ldap/all", r.SearchAllEntry)
+
+	// login
+	groupRoute.POST("/login", r.Login)
+	
+	// search account attributes
+	groupRoute.GET("/ldap/dn", r.SearchEntryAttribute)
+
+	// add account
+
+
+	// delete account
+
+	// update account
+}
+
+func (r *Router) SearchEntryAttribute(c *gin.Context) {
+	dn,exist := c.GetQuery("dn")
+	if !exist {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": "please give dn paramter"})
+		return
+	}
+	attrs, err := r.Ldap.GetAttrOfObjectClass(dn)
+	if err != nil {
+		log.Errorf("get attribute errors: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+	}
+	c.JSON(http.StatusOK, attrs)
+}
+
+func (r *Router) SearchAllEntry(c *gin.Context) {
+	if r.Ldap == nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "LDAP connection is not established"})
 			return
 		}
@@ -133,20 +176,6 @@ func (r *Router) SetupRouter() {
 		}
 
 		c.JSON(http.StatusOK, entries)
-	})
-
-	// login
-	groupRoute.POST("/login", r.Login)
-
-	// search with specific filter
-
-	// search account attributes
-
-	// add account
-
-	// delete account
-
-	// update account
 }
 
 func (r *Router) StartWebServer(port int) {
