@@ -19,7 +19,7 @@ test-bench:
 
 clean:
 	go clean -testcache
-	rm -f coverage.out coverage.html
+	rm -f coverage.out coverage.html main
 
 test-json:
 	go test -v -json ./... > test_results.json

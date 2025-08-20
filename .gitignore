@@ -33,3 +33,4 @@ go.work.sum
 vendor
 main
 *.exe
+*main
