@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"com.ldap/management/ldap"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	log "github.com/sirupsen/logrus"
@@ -118,6 +119,8 @@ func (r *Router) Recovery() gin.HandlerFunc {
 }
 
 func (r *Router) SetupRouter() {
+	r.Engine.Use(r.Recovery())
+	r.Engine.Use(cors.Default())
 	groupRoute := r.Engine.Group("/api/v1")
 	groupRoute.Use(r.AuthRequire())
 	// Define your routes here
