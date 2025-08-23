@@ -80,7 +80,7 @@ func (r *Router) AuthRequire() gin.HandlerFunc {
 			return
 		}
 
-		if tokenString == "" {
+		if tokenString == "" || r.Ldap == nil{
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
 			return
 		}
@@ -118,31 +118,46 @@ func (r *Router) Recovery() gin.HandlerFunc {
 	}
 }
 
+func (r *Router) setupCors() {
+	config := cors.Config{
+		//AllowAllOrigins: true,
+		AllowOrigins: []string{"http://localhost:5173"},
+		AllowCredentials: true,
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		MaxAge: 12 * time.Hour,
+
+	}
+	r.Engine.Use(cors.New(config))
+}
+
 func (r *Router) SetupRouter() {
 	r.Engine.Use(r.Recovery())
-	r.Engine.Use(cors.Default())
+	r.setupCors()
 	groupRoute := r.Engine.Group("/api/v1")
-	groupRoute.Use(r.AuthRequire())
-	// Define your routes here
-	groupRoute.GET("/", func(c *gin.Context) {
-		c.String(200, "Welcome to the LDAP Management Web Interface")
-	})
+	{
+		groupRoute.Use(r.AuthRequire())
+		// Define your routes here
+		groupRoute.GET("/", func(c *gin.Context) {
+			c.String(200, "Welcome to the LDAP Management Web Interface")
+		})
 
-	// search all
-	groupRoute.GET("/ldap/all", r.SearchAllEntry)
+		// search all
+		groupRoute.GET("/ldap/all", r.SearchAllEntry)
 
-	// login
-	groupRoute.POST("/login", r.Login)
-	
-	// search account attributes
-	groupRoute.GET("/ldap/dn", r.SearchEntryAttribute)
+		// login
+		groupRoute.POST("/login", r.Login)
+		
+		// search account attributes
+		groupRoute.GET("/ldap/dn", r.SearchEntryAttribute)
 
-	// add account
+		// add account
 
 
-	// delete account
+		// delete account
 
-	// update account
+		// update account
+	}
 }
 
 func (r *Router) SearchEntryAttribute(c *gin.Context) {
