@@ -118,6 +118,36 @@ func (r *Router) Recovery() gin.HandlerFunc {
 	}
 }
 
+func (r *Router) Add(c *gin.Context) {
+	var body map[string]string
+	
+	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	log.Println("receive msg: ", body)
+	if err := r.Ldap.AddRecord(body); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message":err.Error()})
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message":"success"})
+}
+
+func (r *Router) Delete(c *gin.Context) {
+	dn := c.Query("dn")
+	log.Info("going to delete ", dn)
+	if len(dn) <= 0{
+		c.AbortWithStatusJSON(http.StatusBadRequest,gin.H{"message":"please input which dn to delete"})
+		return
+	}
+	
+	if err := r.Ldap.DeleteRecord(dn); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message":err.Error()})
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"message":"success"})
+}
+
 func (r *Router) setupCors() {
 	config := cors.Config{
 		//AllowAllOrigins: true,
@@ -150,12 +180,18 @@ func (r *Router) SetupRouter() {
 		
 		// search account attributes
 		groupRoute.GET("/ldap/dn", r.SearchEntryAttribute)
+		
+		// get all schema
+		groupRoute.GET("/schema", func (c *gin.Context)  {
+			operation := r.Ldap.(*ldap.LDAPOperation)
 
+			c.JSON(http.StatusOK, gin.H{"schemas":operation.ObjParser.Objects})
+		})
 		// add account
-
+		groupRoute.POST("/ldap/add", r.Add)
 
 		// delete account
-
+		groupRoute.DELETE("/ldap/del", r.Delete)
 		// update account
 	}
 }

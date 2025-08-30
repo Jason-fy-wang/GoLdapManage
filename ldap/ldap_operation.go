@@ -15,6 +15,8 @@ type LdapOperation interface{
 	Search(baseDN, filter string) ([]*gldap.Entry, error)
 	GetAttrOfObjectClass(dn string) ([]*gldap.Entry, error) 
 	GetObjectClassAttributes() error
+	DeleteRecord(dn string) error
+	AddRecord(info map[string]string) error
 	Close() error
 }
 
@@ -87,6 +89,48 @@ func (op *LDAPOperation) Authenicate() error {
 	_, err := op.Conn.Search(req)
 
 	return err
+}
+
+func (op *LDAPOperation) AddRecord(info map[string]string) error {
+	dn,ok := info["DN"]
+	if !ok {
+		msg := "invlid request. missing dn attribute"
+		log.Fatalln()
+		return errors.New(msg)
+	}
+	delete(info, "DN")
+	addrequest := gldap.NewAddRequest(dn, nil)
+	for k, v := range info {
+		if strings.Contains(v, ",") {
+			vals := strings.Split(v, ",")
+			for i:=range vals{
+				vals[i] = strings.TrimSpace(vals[i])
+			}
+			addrequest.Attribute(k,vals)
+			
+		}else{
+			addrequest.Attribute(k,[]string{strings.TrimSpace(v)})
+		}
+	}	
+	
+	if err := op.Conn.Add(addrequest); err != nil {
+		log.Println("add request error: ", err)
+		return err
+	}
+	return nil
+}
+
+func (op *LDAPOperation) DeleteRecord(dn string) error {
+	if dn == "" || len(dn) <= 0{
+		return errors.New("please give an valid dn")
+	}
+	delReq := gldap.NewDelRequest(dn, nil)
+
+	if err:=op.Conn.Del(delReq); err != nil{
+		log.Fatalln("delete record error:", err)
+		return err
+	}
+	return nil
 }
 
 func (op *LDAPOperation) Search(baseDN, filter string) ([]*gldap.Entry, error) {

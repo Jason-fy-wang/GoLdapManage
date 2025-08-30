@@ -7,13 +7,13 @@ import (
 )
 
 type ObjectClass struct {
-	Oid string
-	Name []string
-	Parent string
-	Description string
-	Type string
-	Must []string
-	May []string
+	Oid string   	`json:"oid"`
+	Name []string	`json:"name"`
+	Parent string	`json:"parent"`
+	Description string	`json:"description"`
+	Type string		`json:"type"`
+	Must []string	`json:"must"`
+	May []string	`json:"may"`
 }
 
 const (
@@ -23,7 +23,7 @@ const (
 )
 
 type ObjectClassParser struct {
-	Objects map[string]*ObjectClass
+	Objects map[string]*ObjectClass   `json:"objects"`
 }
 
 func NewObjectClassParser() *ObjectClassParser {
@@ -130,7 +130,9 @@ func (p *ObjectClassParser) ParseObjectNames(names string) []string {
 	items := strings.Split(names, " ")
 	for _, item := range items {
 		item = strings.Trim(item," '")
-		nms = append(nms, item)
+		if item != "" {
+			nms = append(nms, item)
+		}
 	}
 	return nms
 }
