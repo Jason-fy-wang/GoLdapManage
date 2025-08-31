@@ -1,7 +1,7 @@
 FROM node:22.19.0 AS front-build
 WORKDIR /app
 COPY frontend .
-RUN npm ci && npm run build
+RUN npm install && npm run build
 
 
 FROM golang:tip-alpine3.22 AS backend
