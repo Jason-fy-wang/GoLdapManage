@@ -151,7 +151,7 @@ func (r *Router) Delete(c *gin.Context) {
 func (r *Router) setupCors() {
 	config := cors.Config{
 		//AllowAllOrigins: true,
-		AllowOrigins: []string{"http://localhost:5173"},
+		AllowOrigins: []string{"http://localhost:5173","http://192.168.20.21:5173","http://*:5173"},
 		AllowCredentials: true,
 		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
 		AllowHeaders: []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
