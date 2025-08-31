@@ -9,7 +9,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "copy": "cp -r dist ../backend/"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
