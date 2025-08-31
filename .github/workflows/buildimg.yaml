@@ -23,7 +23,7 @@ jobs:
               uses: docker/build-push-action@v5
               with:
                 contenxt: .
-                file: backend/Dockerfile
+                file: Dockerfile
                 push: true
                 platforms: linux/and64,linux/arm64
                 tags: jasonfywang/goldapmanage:v1.0
