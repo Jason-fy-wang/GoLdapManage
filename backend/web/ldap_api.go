@@ -1,9 +1,7 @@
 package web
 
 import (
-	"embed"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"strconv"
 	"time"
@@ -168,13 +166,14 @@ func (r *Router) setStatic(){
 	r.Engine.StaticFile("/", "./dist/index.html")
 }
 
-//go:embed dist/*
+/*//go:embed dist/*
 var staticFiles embed.FS
 
 func (r *Router) setEmbedFile(){
 	subfs, _:=fs.Sub(staticFiles,"dist")
 	r.Engine.StaticFS("/app", http.FS(subfs))
 }
+	*/
 
 func (r *Router) SetupRouter() {
 	r.Engine.Use(r.Recovery())
