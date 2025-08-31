@@ -1,4 +1,4 @@
-FROM node:22 AS front-build
+FROM node:22.19.0 AS front-build
 WORKDIR /app
 COPY frontend .
 RUN npm ci && npm run build
