@@ -11,7 +11,7 @@ RUN go mod tidy
 RUN go build starter/main.go -o server .
 
 
-FROM ubuntu:latest
+FROM ubuntu:24.04
 WORKDIR /app
 COPY --from=front-build /app/dist .
 COPY --from=backend /app/server .
