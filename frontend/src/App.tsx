@@ -7,7 +7,8 @@ import { Detail } from './pages/Detail'
 import {RecordInfo} from './pages/RecordInfo'
 import { Display } from './component/Display'
 import { Ladd } from './component/Ladd'
-axios.defaults.baseURL="http://192.168.20.21:8080/api/v1"
+//axios.defaults.baseURL="http://192.168.20.21:8080/api/v1"
+axios.defaults.baseURL="/api/v1"
 
 function App() {
 
