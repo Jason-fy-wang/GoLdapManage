@@ -8,7 +8,7 @@ FROM golang:tip-alpine3.22 AS backend
 WORKDIR /app
 COPY ./backend .
 RUN go mod tidy
-RUN go build starter/main.go -o server .
+RUN go build starter/main.go -o server
 
 
 FROM ubuntu:24.04
