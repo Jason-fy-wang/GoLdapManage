@@ -4,7 +4,7 @@ COPY frontend .
 RUN npm ci && npm run build
 
 
-FROM golang:1.23 AS backend
+FROM golang:tip-alpine3.22 AS backend
 WORKDIR /app
 COPY ./backend .
 RUN go mod tidy
