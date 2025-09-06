@@ -13,7 +13,7 @@ RUN go build  -o server starter/main.go
 
 FROM ubuntu:24.04
 WORKDIR /app
-COPY --from=front-build /app/dist .
+COPY --from=front-build /app/dist ./dist/
 COPY --from=backend /app/server .
 
 EXPOSE 8080
